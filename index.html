@@ -1,0 +1,333 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Delivery Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="DMS-192.png">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: #1e293b;
+    }
+
+    .login-card {
+      background: white;
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(109, 40, 217, 0.15);
+      /* Purple shadow */
+      text-align: center;
+      margin: 20px;
+    }
+
+    .brand-logo {
+      width: 80px;
+      height: 80px;
+      background: transparent;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+      /* Similar to shipment.html logo style */
+      box-shadow: 0 10px 20px rgba(109, 40, 217, 0.2);
+    }
+
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    p {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 30px;
+      font-weight: 500;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .btn-google {
+      background: white;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+
+    .btn-google:hover {
+      background: #f8fafc;
+    }
+
+    .btn-email {
+      background: #6d28d9;
+      color: white;
+      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+    }
+
+    .btn-email:hover {
+      background: #5b21b6;
+      transform: translateY(-2px);
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 15px;
+      outline: none;
+      box-sizing: border-box;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #6d28d9;
+      box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider::before {
+      margin-right: 15px;
+    }
+
+    .divider::after {
+      margin-left: 15px;
+    }
+
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #6d28d9;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    #errorMsg {
+      color: #ef4444;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+      background: #fef2f2;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-card" id="loginCard">
+    <div class="brand-logo">
+      <img src="DMS-192.png" alt="Logo">
+    </div>
+    <h1>Delivery Management System</h1>
+    <p>Sign in to manage deliveries</p>
+
+    <button class="btn btn-google" onclick="signInWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+      Sign in with Google
+    </button>
+
+    <div class="divider">OR CONTINUE WITH EMAIL</div>
+
+    <div id="emailForm">
+      <div class="input-group">
+        <input type="email" id="email" placeholder="name@example.com">
+      </div>
+      <button class="btn btn-email" onclick="sendOtp()">
+        <span id="sendText">Send Login Code</span>
+        <div id="sendLoad" class="loader" style="display:none"></div>
+      </button>
+    </div>
+
+    <div id="otpForm" style="display:none">
+      <div class="input-group">
+        <input type="text" id="otp" placeholder="Enter 6-digit code" maxlength="6"
+          style="text-align:center; letter-spacing:4px; font-size:18px; font-weight:700;">
+      </div>
+      <button class="btn btn-email" onclick="verifyOtp()">
+        Verify Code
+      </button>
+      <div style="font-size:13px; color:#64748b; margin-top:10px; cursor:pointer;" onclick="resetForm()">
+        Use different email
+      </div>
+    </div>
+
+    <div id="errorMsg"></div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_d_c9Oa-7t0GfbouXyEwK29oPb4d2lJ0iLw3E8O77kZ4J7k-S3X9x-c5H4h7h5y6z/exec';
+
+    // Check Login Status on Load
+    function init() {
+      // Local Session
+      if (localStorage.getItem('session_user')) {
+        window.location.href = 'shipment.html';
+        return;
+      }
+      // Firebase Session
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          window.location.href = 'shipment.html';
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', init);
+
+    function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider).catch(handleError);
+    }
+
+    function sendOtp() {
+      const email = document.getElementById('email').value;
+      if (!email) return handleError({ message: "Please enter email" });
+
+      setLoading(true);
+      fetch(SCRIPT_URL + '?action=sendOtp&email=' + encodeURIComponent(email))
+        .then(r => r.json())
+        .then(res => {
+          setLoading(false);
+          if (res.error) {
+            if (res.error === 'LIMIT_REACHED') {
+              handleError({ message: "Daily limit reached. Please use Google Sign In." });
+            } else {
+              handleError({ message: res.message || res.error });
+            }
+          } else {
+            document.getElementById('emailForm').style.display = 'none';
+            document.getElementById('otpForm').style.display = 'block';
+            document.getElementById('errorMsg').style.display = 'none';
+          }
+        })
+        .catch(err => {
+          setLoading(false);
+          handleError({ message: "Network Error" });
+        });
+    }
+
+    function verifyOtp() {
+      const email = document.getElementById('email').value;
+      const code = document.getElementById('otp').value;
+      if (!code) return;
+
+      fetch(SCRIPT_URL + '?action=verifyOtp&email=' + encodeURIComponent(email) + '&code=' + encodeURIComponent(code))
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            localStorage.setItem('session_user', email);
+            window.location.href = 'shipment.html';
+          } else {
+            handleError({ message: "Invalid Code" });
+          }
+        });
+    }
+
+    function resetForm() {
+      document.getElementById('otpForm').style.display = 'none';
+      document.getElementById('emailForm').style.display = 'block';
+      document.getElementById('otp').value = '';
+      document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    function setLoading(isActive) {
+      const btn = document.querySelector('.btn-email');
+      const txt = document.getElementById('sendText');
+      const load = document.getElementById('sendLoad');
+      if (isActive) {
+        btn.disabled = true;
+        txt.style.display = 'none';
+        load.style.display = 'block';
+      } else {
+        btn.disabled = false;
+        txt.style.display = 'block';
+        load.style.display = 'none';
+      }
+    }
+
+    function handleError(error) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = error.message;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+
+</html>

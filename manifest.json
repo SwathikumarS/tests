@@ -1,0 +1,22 @@
+{
+    "short_name": "Pro Courier",
+    "name": "Antigravity Courier Management",
+    "icons": [
+        {
+            "src": "DMS-192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "DMS-512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ],
+    "start_url": "index.html",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "theme_color": "#2563eb",
+    "description": "Professional Courier Management System with Voice Notifications"
+}

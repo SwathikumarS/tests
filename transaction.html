@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - CMS VOICE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6d28d9">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <style>
+        :root {
+            --primary: #6d28d9;
+            --primary-light: #8b5cf6;
+            --primary-dark: #5b21b6;
+            --bg: #f5f3ff;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-sub: #64748b;
+            --muted: #94a3b8;
+            --border: #e2e8f0;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+            --shadow-md: 0 4px 12px rgba(109, 40, 217, .08), 0 1px 3px rgba(0, 0, 0, .06);
+            --shadow-lg: 0 10px 40px rgba(109, 40, 217, .12), 0 4px 12px rgba(0, 0, 0, .06);
+            --success-bg: #dcfce7;
+            --success-fg: #16a34a;
+            --fail-bg: #fee2e2;
+            --fail-fg: #ef4444;
+            --pending-bg: #fef3c7;
+            --pending-fg: #d97706;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ═══════ TOP NAV BAR ═══════ */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(226, 232, 240, .6);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-back {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-back:hover {
+            background: #f8fafc;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-btn:hover {
+            background: #f8fafc;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-ico {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ═══════ CONTAINER ═══════ */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        /* ═══════ METRICS GRID ═══════ */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all .2s;
+        }
+
+        .metric-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .metric-card.m-total::before {
+            background: linear-gradient(90deg, #6d28d9, #8b5cf6);
+        }
+
+        .metric-card.m-success::before {
+            background: linear-gradient(90deg, #16a34a, #4ade80);
+        }
+
+        .metric-card.m-count::before {
+            background: linear-gradient(90deg, #2563eb, #60a5fa);
+        }
+
+        .metric-card.m-avg::before {
+            background: linear-gradient(90deg, #d97706, #fbbf24);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .metric-sub {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-top: 4px;
+        }
+
+        /* ═══════ FILTER BAR ═══════ */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .filter-spacer {
+            flex: 1;
+        }
+
+        .refresh-btn {
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .refresh-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* ═══════ TRANSACTION LIST ═══════ */
+        .txn-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .txn-card {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all .2s;
+            gap: 14px;
+            position: relative;
+        }
+
+        .txn-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+            border-color: rgba(109, 40, 217, .15);
+        }
+
+        .txn-card:active {
+            transform: translateY(0);
+        }
+
+        .txn-app-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .txn-app-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .txn-app-logo .placeholder-icon {
+            width: 20px;
+            height: 20px;
+            stroke: var(--muted);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .txn-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .txn-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .txn-meta {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .txn-meta .dot {
+            color: var(--border);
+        }
+
+        .txn-right-col {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .txn-amount {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
+        .txn-status-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success-fg);
+        }
+
+        .badge-failed {
+            background: var(--fail-bg);
+            color: var(--fail-fg);
+        }
+
+        .badge-pending {
+            background: var(--pending-bg);
+            color: var(--pending-fg);
+        }
+
+        /* ═══════ EMPTY STATE ═══════ */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* ═══════ SKELETON ═══════ */
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        /* ═══════ DETAIL MODAL (Full-Screen Mobile, Centered Desktop) ═══════ */
+        .detail-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, .4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn .2s ease;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .detail-panel {
+            background: var(--surface);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .25);
+            animation: slideUp .3s cubic-bezier(.16, 1, .3, 1);
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .detail-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(241, 245, 249, .8);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all .15s;
+        }
+
+        .detail-close:hover {
+            background: #f1f5f9;
+        }
+
+        .detail-header {
+            padding: 28px 24px 16px;
+            background: linear-gradient(to bottom, #faf5ff, var(--surface));
+        }
+
+        .detail-payer {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .detail-amount-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .detail-amount {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+
+        .detail-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-status.success {
+            background: var(--success-bg);
+            color: var(--success-fg);
+        }
+
+        .detail-status.failed {
+            background: var(--fail-bg);
+            color: var(--fail-fg);
+        }
+
+        .detail-status.pending {
+            background: var(--pending-bg);
+            color: var(--pending-fg);
+        }
+
+        .detail-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .detail-meta-val {
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .detail-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0;
+            border: none;
+        }
+
+        .detail-fields {
+            padding: 16px 24px 24px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #f1f5f9;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .detail-val {
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 700;
+            text-align: right;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .detail-logo-inline {
+            height: 22px;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+
+        .copy-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .15s;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            background: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .detail-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 60px 20px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .ico16 {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ═══════ TOAST ═══════ */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .2);
+            animation: toastIn .3s ease;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ═══════ RESPONSIVE ═══════ */
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px 12px 32px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .metric-card {
+                padding: 14px 16px;
+            }
+
+            .metric-value {
+                font-size: 20px;
+            }
+
+            .txn-card {
+                padding: 12px 14px;
+                gap: 10px;
+            }
+
+            .txn-app-logo {
+                width: 36px;
+                height: 36px;
+            }
+
+            .txn-name {
+                font-size: 13px;
+            }
+
+            .txn-amount {
+                font-size: 14px;
+            }
+
+            .nav-title {
+                font-size: 15px;
+            }
+
+            .detail-panel {
+                max-width: 100%;
+                border-radius: 16px;
+            }
+
+            .detail-overlay {
+                padding: 10px;
+                align-items: flex-end;
+            }
+
+            .detail-header {
+                padding: 24px 18px 12px;
+            }
+
+            .detail-fields {
+                padding: 12px 18px 20px;
+            }
+
+            .detail-amount {
+                font-size: 24px;
+            }
+
+            .detail-payer {
+                font-size: 17px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══ TOP NAV ═══ -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <a href="shipment.html" class="nav-back" title="Back to Shipments">
+                <svg class="nav-ico" viewBox="0 0 24 24">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </a>
+            <span class="nav-title">Transactions</span>
+        </div>
+        <div class="nav-right">
+            <a href="shipment.html" class="nav-btn" title="Home">
+                <svg class="nav-ico" viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+            </a>
+            <a href="account.html" class="nav-btn" title="Account">
+                <svg class="nav-ico" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- ═══ METRICS ═══ -->
+        <div class="metrics-grid" id="metricsGrid">
+            <div class="metric-card m-total">
+                <div class="metric-label">Total Collected</div>
+                <div class="metric-value" id="metricTotal">—</div>
+                <div class="metric-sub">Today's earnings</div>
+            </div>
+            <div class="metric-card m-success">
+                <div class="metric-label">Success Rate</div>
+                <div class="metric-value" id="metricRate">—</div>
+                <div class="metric-sub">of all transactions</div>
+            </div>
+            <div class="metric-card m-count">
+                <div class="metric-label">Transactions</div>
+                <div class="metric-value" id="metricCount">—</div>
+                <div class="metric-sub">Total today</div>
+            </div>
+            <div class="metric-card m-avg">
+                <div class="metric-label">Avg Amount</div>
+                <div class="metric-value" id="metricAvg">—</div>
+                <div class="metric-sub">Per transaction</div>
+            </div>
+        </div>
+
+        <!-- ═══ FILTER BAR ═══ -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">
+                <svg class="ico16" viewBox="0 0 24 24">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                All
+            </button>
+            <button class="filter-btn" data-filter="success" onclick="setFilter('success', this)">
+                <svg class="ico16" viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Success
+            </button>
+            <button class="filter-btn" data-filter="failed" onclick="setFilter('failed', this)">
+                <svg class="ico16" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                Failed
+            </button>
+            <button class="filter-btn" data-filter="pending" onclick="setFilter('pending', this)">
+                <svg class="ico16" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Pending
+            </button>
+
+            <span class="filter-spacer"></span>
+
+            <button class="refresh-btn" onclick="fetchTransactions()">
+                <svg class="ico16" viewBox="0 0 24 24">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                Refresh
+            </button>
+        </div>
+
+        <!-- ═══ TRANSACTION LIST ═══ -->
+        <div class="txn-list" id="txnList">
+            <div class="empty-state">Loading transactions...</div>
+        </div>
+
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        'use strict';
+
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz90dG1fJmfu6_N2U8bWXNECLvdHRM3czmDNHXzltMBUVEDWRch1zRMlygnLS8CDIZ6PQ/exec';
+
+        let allTransactions = [];
+        let currentFilter = 'all';
+
+        /* ═══ UTILS ═══ */
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity .3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function formatTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d)) return String(iso);
+            const now = new Date();
+            const isToday = d.toDateString() === now.toDateString();
+            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return isToday ? time : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + time;
+        }
+
+        function formatCurrency(val) {
+            const n = parseFloat(val);
+            if (isNaN(n)) return '₹0';
+            return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        }
+
+        /* ═══ AUTH ═══ */
+        function initAuth() {
+            const localUser = localStorage.getItem('session_user');
+            if (localUser) {
+                init();
+                return;
+            }
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    init();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        function init() {
+            fetchTransactions();
+        }
+
+        /* ═══ JSONP HELPER (GAS redirects strip params from fetch) ═══ */
+        let _jsonpId = 0;
+        function jsonp(url) {
+            return new Promise((resolve, reject) => {
+                const cbName = '_jsonpCb_' + (++_jsonpId) + '_' + Date.now();
+                const timeout = setTimeout(() => {
+                    cleanup();
+                    reject(new Error('Request timed out'));
+                }, 15000);
+
+                window[cbName] = (data) => {
+                    cleanup();
+                    resolve(data);
+                };
+
+                function cleanup() {
+                    clearTimeout(timeout);
+                    delete window[cbName];
+                    const s = document.getElementById(cbName);
+                    if (s) s.remove();
+                }
+
+                const sep = url.includes('?') ? '&' : '?';
+                const script = document.createElement('script');
+                script.id = cbName;
+                script.src = url + sep + 'callback=' + cbName;
+                script.onerror = () => { cleanup(); reject(new Error('Network error')); };
+                document.body.appendChild(script);
+            });
+        }
+
+        /* ═══ FETCH DATA ═══ */
+        function fetchTransactions() {
+            const list = document.getElementById('txnList');
+            list.innerHTML = renderSkeletons(6);
+
+            jsonp(SCRIPT_URL + '?action=getLog')
+                .then(res => {
+                    if (res.rows && res.rows.length > 0) {
+                        allTransactions = res.rows;
+                        computeMetrics(res.rows);
+                        applyFilter();
+                    } else {
+                        allTransactions = [];
+                        computeMetrics([]);
+                        list.innerHTML = '<div class="empty-state">No transactions found today.</div>';
+                    }
+                })
+                .catch(e => {
+                    console.error('Fetch error:', e);
+                    list.innerHTML = `<div class="empty-state" style="color:var(--fail-fg);">
+                        Failed to load transactions.<br>
+                        <span style="font-size:11px; opacity:.7;">${e.message}</span>
+                    </div>`;
+                });
+        }
+
+        /* ═══ METRICS ═══ */
+        function computeMetrics(rows) {
+            let totalAmount = 0;
+            let successCount = 0;
+            const total = rows.length;
+
+            rows.forEach(r => {
+                const amt = parseFloat(r.amount) || 0;
+                const status = (r.status || '').toUpperCase();
+                totalAmount += amt;
+                if (status === 'SUCCESS' || status === 'PAID') successCount++;
+            });
+
+            const avgAmount = total > 0 ? totalAmount / total : 0;
+            const successRate = total > 0 ? Math.round((successCount / total) * 100) : 0;
+
+            document.getElementById('metricTotal').textContent = formatCurrency(totalAmount);
+            document.getElementById('metricRate').textContent = successRate + '%';
+            document.getElementById('metricCount').textContent = total;
+            document.getElementById('metricAvg').textContent = formatCurrency(avgAmount);
+        }
+
+        /* ═══ FILTER ═══ */
+        function setFilter(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilter();
+        }
+
+        function applyFilter() {
+            let filtered = allTransactions;
+            if (currentFilter !== 'all') {
+                filtered = allTransactions.filter(r => {
+                    const s = (r.status || '').toUpperCase();
+                    if (currentFilter === 'success') return s === 'SUCCESS' || s === 'PAID';
+                    if (currentFilter === 'failed') return s === 'FAILED';
+                    if (currentFilter === 'pending') return s !== 'SUCCESS' && s !== 'PAID' && s !== 'FAILED';
+                    return true;
+                });
+            }
+            renderTransactions(filtered);
+        }
+
+        /* ═══ RENDER ═══ */
+        function renderSkeletons(count) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                html += `<div class="txn-card" style="pointer-events:none;">
+                    <div class="txn-app-logo"><div class="skeleton" style="width:100%;height:100%;"></div></div>
+                    <div class="txn-info">
+                        <div class="skeleton" style="width:140px;height:14px;margin-bottom:6px;"></div>
+                        <div class="skeleton" style="width:100px;height:10px;"></div>
+                    </div>
+                    <div class="txn-right-col">
+                        <div class="skeleton" style="width:60px;height:16px;margin-bottom:6px;margin-left:auto;"></div>
+                        <div class="skeleton" style="width:50px;height:14px;margin-left:auto;"></div>
+                    </div>
+                </div>`;
+            }
+            return html;
+        }
+
+        function renderTransactions(rows) {
+            const list = document.getElementById('txnList');
+            if (!rows || rows.length === 0) {
+                list.innerHTML = '<div class="empty-state">No transactions match this filter.</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            rows.forEach((row, i) => {
+                const time = formatTime(row.time);
+                const txnid = row.txnid || 'N/A';
+                const amount = row.amount || '0';
+                const status = (row.status || 'Pending').toUpperCase();
+                const name = row.name || 'Unknown';
+                const mode = row.appName || row.mode || 'UPI';
+                const logo = row.logo || '';
+
+                const badgeClass = (status === 'SUCCESS' || status === 'PAID') ? 'badge-success' :
+                    (status === 'FAILED' ? 'badge-failed' : 'badge-pending');
+
+                const statusLabel = (status === 'PAID') ? 'SUCCESS' : status;
+
+                const logoHtml = logo
+                    ? `<img src="${logo}" alt="${mode}" loading="lazy">`
+                    : `<svg class="placeholder-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>`;
+
+                const card = document.createElement('div');
+                card.className = 'txn-card';
+                card.setAttribute('data-index', i);
+                card.onclick = () => showTxnDetail(row);
+                card.innerHTML = `
+                    <div class="txn-app-logo">${logoHtml}</div>
+                    <div class="txn-info">
+                        <div class="txn-name">${name}</div>
+                        <div class="txn-meta">
+                            <span>${time}</span>
+                            <span class="dot">•</span>
+                            <span>${mode}</span>
+                        </div>
+                    </div>
+                    <div class="txn-right-col">
+                        <div class="txn-amount">${formatCurrency(amount)}</div>
+                        <div class="txn-status-badge ${badgeClass}">${statusLabel}</div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        /* ═══ DETAIL POPUP (Exact replica of Old Version) ═══ */
+        function showTxnDetail(row) {
+            // Close any existing
+            document.querySelectorAll('.detail-overlay').forEach(el => el.remove());
+
+            const txnId = row.txnid;
+            const name = row.name || 'Unknown';
+            const amount = row.amount ? '₹' + row.amount : '₹0';
+            const statusVal = (row.status || 'Pending').toUpperCase();
+            const isSuccess = statusVal === 'SUCCESS' || statusVal === 'PAID';
+            const statusText = isSuccess ? 'SUCCESS' : statusVal;
+            const statusClass = isSuccess ? 'success' : (statusVal === 'FAILED' ? 'failed' : 'pending');
+            const time = row.time ? new Date(row.time).toLocaleString('en-IN') : '';
+
+            // Build detail fields
+            const logo = row.logo || '';
+            const fields = [
+                { l: 'App Used', val: row.appName || row.mode || '', logo: logo },
+                { l: 'Payment Mode', val: row.mode || '' },
+                { l: 'UPI ID (VPA)', val: row.vpa || '', copy: true },
+                { l: 'Bank Ref No.', val: row.bankRef || '' },
+                { l: 'PayU Platform', val: row.payuApp || '' }
+            ].filter(f => f.val);
+
+            let fieldsHtml = fields.map(f => `
+                <div class="detail-row">
+                    <span class="detail-label">${f.l}</span>
+                    <div class="detail-val">
+                        ${f.logo ? `<img src="${f.logo}" class="detail-logo-inline" alt="${f.val}">` : ''}
+                        <span>${f.val}</span>
+                        ${f.copy ? `<button class="copy-btn" title="Copy" onclick="event.stopPropagation(); navigator.clipboard.writeText('${f.val.replace(/'/g, "\\'")}'); showToast('Copied!')">
+                            <svg class="ico16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // If we have a txnId, also try fetching full details from server
+            if (txnId && txnId !== 'N/A') {
+                // Start with what we have, and enhance if server responds
+                showDetailPanel(name, amount, statusText, statusClass, time, txnId, fieldsHtml, logo);
+
+                // Try to fetch richer details from server via JSONP
+                jsonp(`${SCRIPT_URL}?action=txnDetails&txnId=${encodeURIComponent(txnId)}`)
+                    .then(data => {
+                        if (data.error) return;
+
+                        const get = (keys) => {
+                            const foundKey = Object.keys(data).find(dk => {
+                                const cleaned = dk.toLowerCase().trim();
+                                return keys.some(alias => cleaned === alias || cleaned.includes(alias));
+                            });
+                            return foundKey ? String(data[foundKey] || '') : '';
+                        };
+
+                        const richName = get(['payer name', 'name', 'sender']) || name;
+                        let richAmount = get(['amount']) || amount;
+                        if (richAmount && !richAmount.includes('₹')) richAmount = '₹' + richAmount;
+
+                        const richStatus = get(['status']);
+                        const richSuccess = richStatus.toLowerCase() === 'success';
+                        const richStatusText = richSuccess ? 'SUCCESS' : (richStatus.toUpperCase() || statusText);
+                        const richStatusClass = richSuccess ? 'success' : (richStatus.toUpperCase() === 'FAILED' ? 'failed' : 'pending');
+
+                        const richTime = get(['payment time', 'time', 'timestamp', 'date']);
+                        const richTxnId = get(['txn id', 'transaction id', 'txnno', 'txid']) || txnId;
+
+                        let appLogo = get(['app logo', 'logo']) || logo;
+                        const appUsed = get(['app used', 'app', 'source app', 'channel']);
+
+                        const richFields = [
+                            { l: 'App Used', val: appUsed, logo: appLogo },
+                            { l: 'Payment Mode', val: get(['payment mode', 'mode', 'method', 'type']) },
+                            { l: 'UPI ID (VPA)', val: get(['upi id (vpa)', 'upi id', 'vpa', 'upi']), copy: true },
+                            { l: 'Bank Ref No.', val: get(['bank ref no.', 'bank ref', 'reference', 'ref no']) },
+                            { l: 'PayU Platform', val: get(['payu app']) }
+                        ].filter(f => f.val);
+
+                        if (richFields.length > 0) {
+                            const richHtml = richFields.map(f => `
+                                <div class="detail-row">
+                                    <span class="detail-label">${f.l}</span>
+                                    <div class="detail-val">
+                                        ${f.logo ? `<img src="${f.logo}" class="detail-logo-inline" alt="${f.val}">` : ''}
+                                        <span>${f.val}</span>
+                                        ${f.copy ? `<button class="copy-btn" title="Copy" onclick="event.stopPropagation(); navigator.clipboard.writeText('${f.val.replace(/'/g, "\\'")}'); showToast('Copied!')">
+                                            <svg class="ico16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                        </button>` : ''}
+                                    </div>
+                                </div>
+                            `).join('');
+
+                            // Update the existing panel
+                            const panel = document.querySelector('.detail-panel');
+                            if (panel) {
+                                const payerEl = panel.querySelector('.detail-payer');
+                                const amountEl = panel.querySelector('.detail-amount');
+                                const statusEl = panel.querySelector('.detail-status');
+                                const timeEl = panel.querySelector('.detail-time-val');
+                                const txnEl = panel.querySelector('.detail-txn-val');
+                                const fieldsEl = panel.querySelector('.detail-fields');
+
+                                if (payerEl) payerEl.textContent = richName;
+                                if (amountEl) amountEl.textContent = richAmount;
+                                if (statusEl) {
+                                    statusEl.textContent = richStatusText;
+                                    statusEl.className = 'detail-status ' + richStatusClass;
+                                }
+                                if (timeEl && richTime) timeEl.textContent = richTime;
+                                if (txnEl) txnEl.firstChild.textContent = richTxnId;
+                                if (fieldsEl) fieldsEl.innerHTML = richHtml || '<div style="text-align:center;color:var(--muted);font-size:12px;">No additional details.</div>';
+                            }
+                        }
+                    })
+                    .catch(err => console.warn('Rich details fetch failed:', err));
+            } else {
+                showDetailPanel(name, amount, statusText, statusClass, time, txnId, fieldsHtml, logo);
+            }
+        }
+
+        function showDetailPanel(name, amount, statusText, statusClass, time, txnId, fieldsHtml, logo) {
+            const overlay = document.createElement('div');
+            overlay.className = 'detail-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+            overlay.innerHTML = `
+                <div class="detail-panel">
+                    <button class="detail-close" onclick="this.closest('.detail-overlay').remove()">
+                        <svg class="ico16" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+
+                    <div class="detail-header">
+                        <div class="detail-payer">${name}</div>
+                        <div class="detail-amount-row">
+                            <div class="detail-amount">${amount}</div>
+                            <div class="detail-status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="detail-meta-row">
+                            <span>Payment Time</span>
+                            <span class="detail-meta-val detail-time-val">
+                                <svg class="ico16" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                ${time || 'N/A'}
+                            </span>
+                        </div>
+                        <div class="detail-meta-row">
+                            <span>Txn ID</span>
+                            <span class="detail-meta-val detail-txn-val">
+                                ${txnId || 'N/A'}
+                                ${txnId && txnId !== 'N/A' ? `<button class="copy-btn" title="Copy" onclick="event.stopPropagation(); navigator.clipboard.writeText('${txnId}'); showToast('Copied!')">
+                                    <svg class="ico16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>` : ''}
+                            </span>
+                        </div>
+                    </div>
+
+                    <hr class="detail-divider">
+
+                    <div class="detail-fields">
+                        ${fieldsHtml || '<div style="text-align:center;color:var(--muted);font-size:12px;">No additional details.</div>'}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+        }
+
+        document.addEventListener('DOMContentLoaded', initAuth);
+    </script>
+
+</body>
+
+</html>
